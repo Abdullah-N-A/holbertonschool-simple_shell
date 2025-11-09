@@ -16,8 +16,8 @@ int status = 0;
 (void)argc;
 
 while (1)
-  {
-  if (isatty(STDIN_FILENO))
+{
+if (isatty(STDIN_FILENO))
   display_prompt();
 
 line = read_line();
