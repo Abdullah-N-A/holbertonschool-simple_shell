@@ -29,66 +29,8 @@ char *read_line(void)
 }
 
 /**
- * parse_args - split a line into argv by spaces/tabs (no quotes handling)
- * @line: modifiable buffer (will be tokenized)
- * Return: NULL-terminated argv array (malloc'ed), or NULL if empty
- */
-char **parse_args(char *line)
-{
-	char *tok;
-	size_t cap = 8, argc = 0;
-	char **argv_exec;
-
-	/* skip leading spaces/tabs */
-	while (*line == ' ' || *line == '\t')
-		line++;
-
-	if (*line == '\0')
-		return (NULL);
-
-	argv_exec = malloc(sizeof(char *) * cap);
-	if (!argv_exec)
-		return (NULL);
-
-	tok = strtok(line, " \t");
-	while (tok)
-	{
-		if (argc + 1 >= cap)
-		{
-			size_t newcap = cap * 2;
-			char **tmp = realloc(argv_exec, sizeof(char *) * newcap);
-			if (!tmp)
-			{
-				free(argv_exec);
-				return (NULL);
-			}
-			argv_exec = tmp;
-			cap = newcap;
-		}
-		argv_exec[argc++] = tok;
-		tok = strtok(NULL, " \t");
-	}
-	argv_exec[argc] = NULL;
-
-	if (argc == 0)
-	{
-		free(argv_exec);
-		return (NULL);
-	}
-	return (argv_exec);
-}
-
-/**
- * free_args - free argv array holder (tokens are inside line buffer)
- */
-void free_args(char **argv_exec)
-{
-	free(argv_exec);
-}
-
-/**
  * run_command - fork/exec a command with arguments, no PATH lookup
- * @argv_exec: NULL-terminated argv (argv_exec[0] is the path, e.g. ./hbtn_ls)
+ * @argv_exec: NULL-terminated argv (argv_exec[0] is the path)
  * @progname: shell argv[0] to use in perror messages
  * Return: child's exit status, or 1 on error
  */
@@ -107,7 +49,6 @@ int run_command(char **argv_exec, const char *progname)
 	}
 	if (pid == 0)
 	{
-		/* child */
 		execve(argv_exec[0], argv_exec, environ);
 		perror(progname);
 		_exit(127);
@@ -128,10 +69,10 @@ int run_command(char **argv_exec, const char *progname)
 }
 
 /**
- * main - entry point of the simple shell (0.1 + args support)
+ * main - simple shell 0.2 (supports arguments, no PATH)
  * @argc: argument count
  * @argv: argument vector (argv[0] used in error messages)
- * Return: last command's status
+ * Return: last command status
  */
 int main(int argc, char **argv)
 {
@@ -147,13 +88,12 @@ int main(int argc, char **argv)
 		line = read_line();
 		if (line == NULL)
 		{
-			/* EOF: Ctrl+D or non-interactive end */
+			/* EOF */
 			if (isatty(STDIN_FILENO))
 				write(STDOUT_FILENO, "\n", 1);
 			break;
 		}
 
-		/* tokenize line into argv and exec (no PATH resolution) */
 		{
 			char **argv_exec = parse_args(line);
 			if (argv_exec)
