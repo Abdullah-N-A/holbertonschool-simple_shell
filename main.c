@@ -1,125 +1,125 @@
-#include "shell.h"
+#include "main.h"
 
 /**
- * _print_prompt - print prompt when stdin is a TTY
+ * display_prompt - print the interactive prompt
  */
-static void _print_prompt(void)
+void display_prompt(void)
 {
-	if (isatty(STDIN_FILENO))
-		write(STDOUT_FILENO, PROMPT, sizeof(PROMPT) - 1);
+	write(STDOUT_FILENO, "#cisfun$ ", 9);
 }
 
 /**
- * _sanitize_line - strip trailing newline and outer spaces/tabs
- * @s: line buffer from getline (modified in-place)
- * Return: pointer to first non-space char (or NULL)
+ * read_line - read one line from stdin using getline
+ * Return: pointer to malloc'ed buffer (caller must free) or NULL on EOF/error
  */
-static char *_sanitize_line(char *s)
+char *read_line(void)
 {
-	size_t i = 0, end;
+	char *line = NULL;
+	size_t n = 0;
+	ssize_t r = getline(&line, &n, stdin);
 
-	if (!s)
+	if (r == -1)
+	{
+		free(line);
 		return (NULL);
-
-	end = strlen(s);
-	if (end && s[end - 1] == '\n')
-		s[--end] = '\0';
-
-	while (s[i] == ' ' || s[i] == '\t')
-		i++;
-
-	end = strlen(s + i);
-	while (end && (s[i + end - 1] == ' ' || s[i + end - 1] == '\t'))
-		end--;
-	s[i + end] = '\0';
-
-	return (s + i);
+	}
+	if (r > 0 && line[r - 1] == '\n')
+		line[r - 1] = '\0';
+	return (line);
 }
 
 /**
- * _execute_oneword - exec a single word (no PATH resolution)
- * @cmd: command string (absolute/relative) to exec
- * @progname: argv[0] for perror prefix
- * Return: child's exit status, 127 on exec error
+ * run_command - fork/exec a one-word command (no args), no PATH lookup
+ * @cmd: command path or word
+ * @argv0: program name to use in error messages (usually argv[0])
+ * Return: exit status code of child or 0 for empty line
  */
-static int _execute_oneword(char *cmd, char *progname)
+int run_command(const char *cmd, const char *argv0)
 {
 	pid_t pid;
-	int status = 0;
-	char *argvv[2];
+	char *argv_exec[2];
 
-	if (!cmd || *cmd == '\0')
+	if (cmd == NULL || *cmd == '\0')
 		return (0);
 
-	argvv[0] = cmd;
-	argvv[1] = NULL;
+	argv_exec[0] = (char *)cmd;
+	argv_exec[1] = NULL;
 
 	pid = fork();
 	if (pid == -1)
 	{
-		perror(progname);
+		perror(argv0);
 		return (1);
 	}
 	if (pid == 0)
 	{
-		/* No PATH in 0.1: try exactly what user typed */
-		if (execve(cmd, argvv, environ) == -1)
-		{
-			perror(progname);
-			_exit(127);
-		}
-		_exit(0);
+		/* child */
+		execve(argv_exec[0], argv_exec, environ);
+		perror(argv0);
+		_exit(127);
 	}
-	if (waitpid(pid, &status, 0) == -1)
-		perror(progname);
+	else
+	{
+		int status;
 
-	if (WIFEXITED(status))
-		return (WEXITSTATUS(status));
-	return (0);
+		if (waitpid(pid, &status, 0) == -1)
+		{
+			perror(argv0);
+			return (1);
+		}
+		if (WIFEXITED(status))
+			return (WEXITSTATUS(status));
+		return (1);
+	}
 }
 
 /**
- * run_shell - REPL: prompt, read, sanitize, exec single-word command
- * @progname: argv[0] (program name)
- * Return: last status
+ * main - entry point of the simple shell 0.1
+ * @argc: argument count
+ * @argv: argument vector (argv[0] used in error messages)
+ * Return: last command's status
  */
-int run_shell(char *progname)
+int main(int argc, char **argv)
 {
-	char *line = NULL, *cmd;
-	size_t n = 0;
-	ssize_t r;
 	int status = 0;
+	char *line = NULL;
+	(void)argc;
 
 	while (1)
 	{
-		_print_prompt();
-		r = getline(&line, &n, stdin);
-		if (r == -1)
+		if (isatty(STDIN_FILENO))
+			display_prompt();
+
+		line = read_line();
+		if (line == NULL)
 		{
+			/* EOF: Ctrl+D or non-interactive end */
 			if (isatty(STDIN_FILENO))
 				write(STDOUT_FILENO, "\n", 1);
 			break;
 		}
 
-		cmd = _sanitize_line(line);
-		if (!cmd || cmd[0] == '\0')
-			continue;
+		/* one-word only (no args), ignore leading spaces/tabs */
+		{
+			char *p = line;
+			while (*p == ' ' || *p == '\t')
+				p++;
 
-		/* 0.1: treat the whole line as ONE word (no args, no PATH) */
-		status = _execute_oneword(cmd, progname);
+			/* cut at first space/tab */
+			{
+				char *space = p;
+				while (*space && *space != ' ' && *space != '\t')
+					space++;
+				*space = '\0';
+			}
+
+			if (*p != '\0')
+				status = run_command(p, argv[0]);
+		}
+
+		free(line);
+		line = NULL;
 	}
 	free(line);
 	return (status);
-}
-
-/**
- * main - Entry point
- * @argc: argument count
- * @argv: argument vector
- * Return: exit status
- */
-int main(int argc, char **argv)
-{
-	(void)argc;
-	return (run_shell(argv[0]));
 }
