@@ -13,6 +13,8 @@ extern char **environ;
 
 void display_prompt(void);
 char *read_line(void);
-int run_command(const char *cmd, const char *argv0);
+char **parse_args(char *line);
+void free_args(char **argv_exec);
+int run_command(char **argv_exec, const char *progname);
 
 #endif /* MAIN_H */
