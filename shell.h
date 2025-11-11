@@ -11,6 +11,21 @@
 
 extern char **environ;
 
+typedef unsigned char u8;
+
+/* Shell struct */
+typedef struct shell_s
+{
+    u8 *progname;
+    char **envp;
+    int *exit;
+} shell_t;
+
+/* Shell functions */
+shell_t *shell_init(int flags, u8 *progname, char **envp);
+shell_t *shell_runtime(shell_t *shell);
+void shell_free(shell_t *shell);
+
 #define PROMPT "#cisfun$ "
 
 int run_shell(char *progname);
