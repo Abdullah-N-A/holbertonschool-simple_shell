@@ -1,16 +1,25 @@
-CC = gcc
-CFLAGS = -Wall -Werror -Wextra -pedantic -std=gnu89
-SRC = main.c  parser.c execute.c helpers.c env.c path.c shell.c
-OBJ = $(SRC:.c=.o)
-EXEC = hsh
+CC      := gcc
+CFLAGS  := -Wall -Werror -Wextra -pedantic -std=gnu89
+NAME    := hsh
+SRC     := main.c tokenizer.c path.c errors.c builtins.c
+OBJ     := $(SRC:.c=.o)
 
-all: $(EXEC)
+.PHONY: all clean fclean re betty
 
-$(EXEC): $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) -o $(EXEC)
+all: $(NAME)
 
-%.o: %.c shell.h
-	$(CC) $(CFLAGS) -c $< -o $@
+$(NAME): $(OBJ)
+	$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
 
 clean:
-	rm -f $(OBJ) $(EXEC)
+	rm -f $(OBJ)
+
+fclean: clean
+	rm -f $(NAME)
+
+re: fclean all
+
+betty:
+	@files="$(wildcard *.c) $(wildcard *.h)"; \
+	if [ -z "$$files" ]; then echo "No C/H files to check."; \
+	else betty $$files; fi
