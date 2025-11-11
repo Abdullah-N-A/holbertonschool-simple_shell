@@ -1,16 +1,13 @@
 #include "shell.h"
 
-
-
-
 /**
- * main - function
- * @argc: int
- * @argv: char ptr ptr
- * @envp: char ptr ptr
+ * main - entry point for simple shell
+ * @argc: argument count
+ * @argv: argument vector
+ * @envp: environment variables
  *
- * Return: int
-*/
+ * Return: exit status
+ */
 int main(int argc, char **argv, char **envp)
 {
     int exit_status;

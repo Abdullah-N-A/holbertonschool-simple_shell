@@ -23,11 +23,10 @@ typedef struct shell_s
 
 /* Shell functions */
 shell_t *shell_init(int flags, u8 *progname, char **envp);
-shell_t *shell_runtime(shell_t *shell);
+void shell_runtime(shell_t *shell);
 void shell_free(shell_t *shell);
+char **parse_args(char *line);
 
 #define PROMPT "#cisfun$ "
-
-int run_shell(char *progname);
 
 #endif /* SHELL_H */
