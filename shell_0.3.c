@@ -1,153 +1,234 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
-#include <sys/types.h>
+#include <string.h>
 #include <sys/wait.h>
-#include <sys/stat.h>
 
 extern char **environ;
 
 /**
- * find_path - search for a command in the PATH
- * @cmd: command name
- * Return: full path to executable or NULL
+ * display_prompt - print shell prompt
  */
-char *find_path(char *cmd)
+void display_prompt(void)
 {
-    char *path_env, *path, *dir;
-    static char full_path[1024];
-    struct stat st;
+    write(STDOUT_FILENO, "#cisfun$ ", 9);
+}
 
-    /* If command has '/' check directly */
+/**
+ * read_line - read one line from stdin using getline
+ * Return: malloc'ed buffer or NULL on EOF/error
+ */
+char *read_line(void)
+{
+    char *line = NULL;
+    size_t n = 0;
+    ssize_t r;
+
+    r = getline(&line, &n, stdin);
+    if (r == -1)
+    {
+        free(line);
+        return NULL;
+    }
+    if (r > 0 && line[r - 1] == '\n')
+        line[r - 1] = '\0';
+    return line;
+}
+
+/**
+ * parse_args - split a line into argv by spaces/tabs
+ */
+char **parse_args(char *line)
+{
+    char *tok;
+    size_t cap = 8, argc = 0;
+    char **argv_exec;
+    size_t newcap;
+    char **tmp;
+
+    while (*line == ' ' || *line == '\t')
+        line++;
+
+    if (*line == '\0')
+        return NULL;
+
+    argv_exec = malloc(sizeof(char *) * cap);
+    if (!argv_exec)
+        return NULL;
+
+    tok = strtok(line, " \t");
+    while (tok)
+    {
+        if (argc + 1 >= cap)
+        {
+            newcap = cap * 2;
+            tmp = realloc(argv_exec, sizeof(char *) * newcap);
+            if (!tmp)
+            {
+                free(argv_exec);
+                return NULL;
+            }
+            argv_exec = tmp;
+            cap = newcap;
+        }
+        argv_exec[argc++] = tok;
+        tok = strtok(NULL, " \t");
+    }
+    argv_exec[argc] = NULL;
+
+    if (argc == 0)
+    {
+        free(argv_exec);
+        return NULL;
+    }
+    return argv_exec;
+}
+
+/**
+ * free_args - free argv array (tokens are inside line buffer)
+ */
+void free_args(char **argv_exec)
+{
+    free(argv_exec);
+}
+
+/**
+ * find_in_path - search for a command in PATH using environ
+ */
+char *find_in_path(char *cmd)
+{
+    char *path_var = NULL, *path_copy, *dir;
+    char *full_path = NULL;
+    int i;
+
     if (strchr(cmd, '/'))
     {
-        if (stat(cmd, &st) == 0 && access(cmd, X_OK) == 0)
-            return cmd;
+        if (access(cmd, X_OK) == 0)
+            return strdup(cmd);
         return NULL;
     }
 
-    path_env = getenv("PATH");
-    if (!path_env)
+    for (i = 0; environ[i]; i++)
+    {
+        if (strncmp(environ[i], "PATH=", 5) == 0)
+        {
+            path_var = environ[i] + 5;
+            break;
+        }
+    }
+    if (!path_var)
         return NULL;
 
-    path = strdup(path_env);
-    if (!path)
+    path_copy = strdup(path_var);
+    if (!path_copy)
         return NULL;
 
-    dir = strtok(path, ":");
+    dir = strtok(path_copy, ":");
     while (dir)
     {
-        snprintf(full_path, sizeof(full_path), "%s/%s", dir, cmd);
-        if (stat(full_path, &st) == 0 && access(full_path, X_OK) == 0)
+        size_t len = strlen(dir) + strlen(cmd) + 2;
+        full_path = malloc(len);
+        if (!full_path)
         {
-            free(path);
+            free(path_copy);
+            return NULL;
+        }
+        snprintf(full_path, len, "%s/%s", dir, cmd);
+        if (access(full_path, X_OK) == 0)
+        {
+            free(path_copy);
             return full_path;
         }
+        free(full_path);
+        full_path = NULL;
         dir = strtok(NULL, ":");
     }
 
-    free(path);
+    free(path_copy);
     return NULL;
 }
 
 /**
- * split_line - tokenize input string
- * @line: input line
- * Return: array of args
+ * run_command - execute a command with arguments
  */
-char **split_line(char *line)
+int run_command(char **argv_exec, const char *progname)
 {
-    char **args = NULL;
-    char *token;
-    size_t bufsize = 64;
-    int i = 0;
+    pid_t pid;
+    char *full_path;
+    int status;
 
-    args = malloc(bufsize * sizeof(char *));
-    if (!args)
+    if (!argv_exec || !argv_exec[0] || argv_exec[0][0] == '\0')
+        return 0;
+
+    full_path = find_in_path(argv_exec[0]);
+    if (!full_path)
     {
-        perror("malloc");
-        exit(EXIT_FAILURE);
+        dprintf(STDERR_FILENO, "%s: %s: not found\n", progname, argv_exec[0]);
+        return 127;
     }
 
-    token = strtok(line, " \t\r\n");
-    while (token)
+    pid = fork();
+    if (pid == -1)
     {
-        args[i++] = token;
-        token = strtok(NULL, " \t\r\n");
+        perror(progname);
+        free(full_path);
+        return 1;
     }
-    args[i] = NULL;
-    return args;
+
+    if (pid == 0)
+    {
+        execve(full_path, argv_exec, environ);
+        perror(progname);
+        free(full_path);
+        _exit(127);
+    }
+
+    free(full_path);
+    if (waitpid(pid, &status, 0) == -1)
+    {
+        perror(progname);
+        return 1;
+    }
+
+    if (WIFEXITED(status))
+        return WEXITSTATUS(status);
+
+    return 1;
 }
 
 /**
- * main - Simple shell 0.3
- * Return: Always 0
+ * main - simple shell
  */
-int main(void)
+int main(int argc, char **argv)
 {
-    char *line = NULL, *path = NULL;
-    size_t len = 0;
-    ssize_t nread;
-    pid_t pid;
-    int status;
-    char **args;
+    int status = 0;
+    char *line;
+    char **argv_exec;
+
+    (void)argc;
 
     while (1)
     {
         if (isatty(STDIN_FILENO))
-            printf(":) ");
-        nread = getline(&line, &len, stdin);
-        if (nread == -1)
+            display_prompt();
+
+        line = read_line();
+        if (!line)
         {
             if (isatty(STDIN_FILENO))
-                printf("\n");
-            break; /* Ctrl+D */
-        }
-
-        args = split_line(line);
-        if (!args[0])
-        {
-            free(args);
-            continue;
-        }
-
-        /* Check for "exit" */
-        if (strcmp(args[0], "exit") == 0)
-        {
-            free(args);
+                write(STDOUT_FILENO, "\n", 1);
             break;
         }
 
-        /* Find full executable path */
-        path = find_path(args[0]);
-        if (!path)
+        argv_exec = parse_args(line);
+        if (argv_exec)
         {
-            fprintf(stderr, "%s: command not found\n", args[0]);
-            free(args);
-            continue;
+            status = run_command(argv_exec, argv[0]);
+            free_args(argv_exec);
         }
 
-        pid = fork();
-        if (pid == -1)
-        {
-            perror("fork");
-            free(args);
-            continue;
-        }
-
-        if (pid == 0)
-        {
-            if (execve(path, args, environ) == -1)
-                perror("execve");
-            exit(EXIT_FAILURE);
-        }
-        else
-            waitpid(pid, &status, 0);
-
-        free(args);
+        free(line);
     }
 
-    free(line);
-    return 0;
+    return status;
 }
