@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Werror -Wextra -pedantic -std=gnu89
-SRC = main.c shell.c
+SRC = main.c  parser.c execute.c helpers.c env.c path.c shell.c
 OBJ = $(SRC:.c=.o)
 EXEC = hsh
 
