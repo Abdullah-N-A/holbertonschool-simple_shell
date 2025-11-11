@@ -10,9 +10,8 @@ char **tokenize_line(char *line)
 	char *token;
 	char **args;
 	int i = 0;
-	int max_args = 64; /* Initial assumption for array size */
+	int max_args = 64; 
 
-	/* Malloc for the array of char pointers */
 	args = malloc(sizeof(char *) * max_args);
 	if (!args)
 	{
@@ -20,13 +19,12 @@ char **tokenize_line(char *line)
 		return (NULL);
 	}
 
-	/* Use strtok to split the line by space, tab, newline, etc. */
 	token = strtok(line, " \t\r\n\a");
 	while (token != NULL)
 	{
 		args[i] = token;
 		i++;
-		/* If i reaches max_args, you'd need to realloc here for a robust shell. */
+		/* Realloc logic omitted for simplicity, stick to max_args */
 		token = strtok(NULL, " \t\r\n\a");
 	}
 	args[i] = NULL; /* Null-terminate the array for execve */
@@ -43,7 +41,6 @@ int check_for_whitespace(char *str)
 	if (str == NULL || *str == '\0')
 		return (1);
 
-	/* Check if the string contains only delimiters used in strtok */
 	while (*str)
 	{
 		if (*str != ' ' && *str != '\t' && *str != '\r' && *str != '\n')

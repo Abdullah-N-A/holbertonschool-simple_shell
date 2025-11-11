@@ -12,12 +12,12 @@ int check_builtins(char **args)
 
 	if (strcmp(args[0], "exit") == 0)
 	{
-		handle_exit(args); /* Handles exit (Task 5) */
+		handle_exit(args); 
 		return (2); /* Signal for exit */
 	}
 	else if (strcmp(args[0], "env") == 0)
 	{
-		print_env(); /* Prints environment (Task 6) */
+		print_env(); 
 		return (1);
 	}
 	
@@ -26,14 +26,14 @@ int check_builtins(char **args)
 
 /**
  * handle_exit - Handles the 'exit' built-in command.
- * @args: The arguments array (for future use with exit status).
+ * @args: The arguments array. (No args handling needed for Task 5)
  * Return: void (exits the process directly).
  */
 void handle_exit(char **args)
 {
-	/* Task 5 requirement: "You don’t have to handle any argument to the built-in exit" */
 	(void)args;
-	exit(EXIT_SUCCESS); 
+	free(args); /* Free the args array before final exit */
+	exit(last_exit_status); /* Exit with the last command status */
 }
 
 /**
@@ -44,10 +44,10 @@ void print_env(void)
 {
 	int i;
 
-	/* environ is a global variable holding the environment */
 	for (i = 0; environ[i] != NULL; i++)
 	{
 		write(STDOUT_FILENO, environ[i], strlen(environ[i]));
 		write(STDOUT_FILENO, "\n", 1);
 	}
+	last_exit_status = 0; /* env execution is successful */
 }

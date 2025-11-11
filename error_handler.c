@@ -4,8 +4,7 @@
  * print_error - Prints the required error message format.
  * @prog_name: The name of the shell program (argv[0]).
  * @command: The command that was not found.
- * * Format: ./hsh: 1: qwerty: not found
- * Note: The line number (1) is hardcoded for simplicity as per the example.
+ * * Format: ./hsh: 1: command: not found
  */
 void print_error(char *prog_name, char *command)
 {

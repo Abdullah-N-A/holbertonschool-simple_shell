@@ -1,10 +1,13 @@
 #include "shell.h"
 
+/* Initialize the global exit status variable */
+int last_exit_status = 0;
+
 /**
  * main - Entry point for the simple shell program.
  * @ac: The argument count. (Unused)
  * @av: The argument vector (Used for error reporting argv[0]).
- * Return: EXIT_SUCCESS on success, or appropriate error code.
+ * Return: The last exit status.
  */
 int main(int ac, char **av)
 {
@@ -15,34 +18,31 @@ int main(int ac, char **av)
 
 	while (1) /* Main shell loop */
 	{
-		/* 1. Display Prompt (Interactive mode) */
 		if (isatty(STDIN_FILENO))
-			print_prompt();
+			print_prompt(); 
 
-		/* 2. Read Command Line */
 		read_bytes = getline(&line, &len, stdin);
 
 		if (read_bytes == -1) /* Handle EOF (Ctrl+D) or read error */
 		{
 			if (isatty(STDIN_FILENO))
-				write(STDOUT_FILENO, "\n", 1);
+				write(STDOUT_FILENO, "\n", 1); 
 			free(line);
-			break;
+			return (last_exit_status); /* Exit with the last known status (Fix for 127) */
 		}
 
-		/* 3. Remove trailing newline and check for empty input */
 		if (read_bytes > 0 && line[read_bytes - 1] == '\n')
 			line[read_bytes - 1] = '\0';
-
+		
 		if (check_for_whitespace(line))
 			continue;
 
 		if (handle_command(line, av[0]) == -1)
 		{
-			; /* Error occurred (Placeholder for future error handling) */
-		}			 /* Error occurred */
+			; /* Error handled inside sub-functions */
+		}
 	}
-	return (EXIT_SUCCESS);
+	/* Return statement added inside EOF check */
 }
 
 /**
@@ -56,7 +56,6 @@ int handle_command(char *line, char *prog_name)
 	char **args;
 	int status = 0;
 
-	/* Tokenize the input string (Task 3) */
 	args = tokenize_line(line); 
 	if (args == NULL || args[0] == NULL)
 	{
@@ -65,7 +64,7 @@ int handle_command(char *line, char *prog_name)
 		return (-1);
 	}
 
-	/* Check for Built-ins (exit, env) (Tasks 5 & 6) */
+	/* Check for Built-ins (exit, env) */
 	status = check_builtins(args);
 	if (status == 1) /* Built-in executed (e.g., env) */
 	{
@@ -75,10 +74,11 @@ int handle_command(char *line, char *prog_name)
 	else if (status == 2) /* Built-in signals exit (e.g., exit) */
 	{
 		free(args);
-		exit(EXIT_SUCCESS);
+		/* handle_exit already calls exit() */
+		return (0); 
 	}
 
-	/* Execute external command (Task 4) */
+	/* Execute external command */
 	execute_command(args, prog_name);
 
 	/* Clean up */

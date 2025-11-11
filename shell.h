@@ -10,13 +10,13 @@
 #include <sys/stat.h>
 #include <string.h>
 
-/* Global Environment Variable */
+/* Global Variables */
 extern char **environ;
+extern int last_exit_status; /* To store the last command's exit status */
 
 /* * --- Function Prototypes --- */
 
 /* A) Main Loop & Prompt */
-int run_shell_loop(char **av);
 int handle_command(char *line, char *prog_name);
 void print_prompt(void);
 
@@ -38,8 +38,5 @@ void handle_exit(char **args);
 
 /* F) Utilities & Error Handling */
 void print_error(char *prog_name, char *command);
-/* Assuming you will use standard string.h functions for simplicity
- * But if restricted, you'd implement _strlen, _strcmp, etc., here.
- */
 
 #endif /* _SHELL_H_ */

@@ -12,13 +12,14 @@ int execute_command(char **args, char *prog_name)
 	int status;
 	char *cmd_path = NULL;
 
-	/* Find the full path (Task 4) */
+	/* Command not found scenario is handled in find_path and its return */
 	cmd_path = find_path(args[0]);
 
 	if (cmd_path == NULL)
 	{
-		/* Command not found, print error and return (Task 4 requirement) */
+		/* Command not found, print error and set status 127 (Fix for checker) */
 		print_error(prog_name, args[0]);
+		last_exit_status = 127;
 		return (-1);
 	}
 
@@ -31,22 +32,24 @@ int execute_command(char **args, char *prog_name)
 	}
 	if (pid == 0) /* Child process */
 	{
-		/* Use execve to execute the command */
 		if (execve(cmd_path, args, environ) == -1)
 		{
-			/* This should technically not be reached if find_path is correct */
+			/* Should not be reached, but good practice */
 			print_error(prog_name, args[0]); 
 			free(cmd_path);
-			/* Use _exit to safely exit the child process */
 			_exit(EXIT_FAILURE); 
 		}
 	}
 	else /* Parent process */
 	{
-		/* Wait for the child process to finish */
 		do {
 			waitpid(pid, &status, WUNTRACED);
 		} while (!WIFEXITED(status) && !WIFSIGNALED(status));
+
+		if (WIFEXITED(status))
+		{
+			last_exit_status = WEXITSTATUS(status);
+		}
 	}
 
 	free(cmd_path);

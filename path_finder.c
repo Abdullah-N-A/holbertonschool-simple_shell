@@ -10,7 +10,7 @@ char *find_path(char *command)
 	char *path_env, *path_copy, *dir, *full_path;
 	struct stat st;
 
-	/* If command is an absolute or relative path, no need to search PATH */
+	/* If command is an absolute or relative path */
 	if (strchr(command, '/') != NULL)
 	{
 		if (stat(command, &st) == 0)
@@ -18,9 +18,10 @@ char *find_path(char *command)
 		return (NULL);
 	}
 
-	/* 1. Get PATH environment variable */
 	path_env = getenv("PATH");
-	if (path_env == NULL)
+	
+	/* Handles empty PATH and NULL PATH correctly */
+	if (path_env == NULL || *path_env == '\0')
 		return (NULL);
 
 	path_copy = strdup(path_env);
@@ -28,10 +29,8 @@ char *find_path(char *command)
 
 	while (dir != NULL)
 	{
-		/* 2. Build the full path (dir/command) */
 		full_path = build_path(dir, command);
 
-		/* 3. Check if the file exists and is executable */
 		if (stat(full_path, &st) == 0)
 		{
 			free(path_copy);
@@ -53,13 +52,11 @@ char *find_path(char *command)
  */
 char *build_path(char *dir, char *command)
 {
-	int len_dir, len_cmd, total_len;
+	int total_len;
 	char *result;
 
-	len_dir = strlen(dir);
-	len_cmd = strlen(command);
 	/* +2 for the '/' separator and the null terminator */
-	total_len = len_dir + len_cmd + 2;
+	total_len = strlen(dir) + strlen(command) + 2;
 
 	result = malloc(sizeof(char) * total_len);
 	if (result == NULL)
