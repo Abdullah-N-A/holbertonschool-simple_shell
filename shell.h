@@ -16,9 +16,9 @@ typedef unsigned char u8;
 
 typedef struct shell_s
 {
-	u8 *progname;
-	char **envp;
-	int *exit;
+    u8 *progname;
+    char **envp;
+    int *exit;
 } shell_t;
 
 shell_t *shell_init(int flags, u8 *progname, char **envp);
@@ -30,4 +30,3 @@ void shell_free(shell_t *shell);
 #define PROMPT ":) "
 
 #endif /* SHELL_H */
-
