@@ -5,7 +5,7 @@ int _strlen(char *s)
     int i = 0;
     while (s[i])
         i++;
-    return (i);
+    return i;
 }
 
 char *_strcpy(char *dest, char *src)
@@ -17,7 +17,7 @@ char *_strcpy(char *dest, char *src)
         i++;
     }
     dest[i] = '\0';
-    return (dest);
+    return dest;
 }
 
 char *_strcat(char *dest, char *src)
@@ -26,36 +26,41 @@ char *_strcat(char *dest, char *src)
     while (dest[i])
         i++;
     while (src[j])
-    {
-        dest[i] = src[j];
-        i++;
-        j++;
-    }
+        dest[i++] = src[j++];
     dest[i] = '\0';
-    return (dest);
+    return dest;
 }
 
-char **split_line(char *line)
+char **split_line(char *line, const char *delim)
 {
-    int bufsize = 64, i = 0;
+    int bufsize = 64, pos = 0;
     char **tokens = malloc(bufsize * sizeof(char *));
     char *token;
 
     if (!tokens)
+    {
+        fprintf(stderr, "Allocation error\n");
         exit(EXIT_FAILURE);
-    token = strtok(line, " \t\r\n\a");
+    }
+
+    token = strtok(line, delim);
     while (token != NULL)
     {
-        tokens[i++] = token;
-        if (i >= bufsize)
+        tokens[pos++] = token;
+
+        if (pos >= bufsize)
         {
             bufsize += 64;
             tokens = realloc(tokens, bufsize * sizeof(char *));
             if (!tokens)
+            {
+                fprintf(stderr, "Allocation error\n");
                 exit(EXIT_FAILURE);
+            }
         }
-        token = strtok(NULL, " \t\r\n\a");
+
+        token = strtok(NULL, delim);
     }
-    tokens[i] = NULL;
+    tokens[pos] = NULL;
     return tokens;
 }

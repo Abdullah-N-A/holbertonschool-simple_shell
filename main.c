@@ -17,7 +17,7 @@ int main(void)
             break;
         }
 
-        line[strcspn(line, "\n")] = '\0'; /* remove newline */
+        line[strcspn(line, "\n")] = '\0';
         args = split_line(line, " \t\r\n\a");
         execute(args);
         free(args);
