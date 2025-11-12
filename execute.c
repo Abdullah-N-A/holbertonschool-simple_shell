@@ -1,64 +1,54 @@
 #include "shell.h"
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <stdio.h>
 
+/**
+ * execute - executes external command
+ * @args: command and arguments array
+ *
+ * Return: exit status of command
+ */
 int execute(char **args)
 {
-    pid_t pid;
-    int status;
+	pid_t child_pid;
+	int status;
+	char *cmd_path;
 
-    if (args[0] == NULL)
-        return 1;
+	if (!args || !args[0])
+		return (1);
 
-    /* Handle "exit" built-in */
-    if (strcmp(args[0], "exit") == 0)
-    {
-        int exit_status = 0;
+	cmd_path = resolve_path(args[0]);
 
-        if (args[1])  /* if there is an argument after exit */
-            exit_status = atoi(args[1]);
+	if (!cmd_path)
+	{
+		fprintf(stderr, "./hsh: 1: %s: not found\n", args[0]);
+		return (127);
+	}
 
-        exit(exit_status);
-    }
+	child_pid = fork();
 
-    /* Handle "env" built-in */
-    if (strcmp(args[0], "env") == 0)
-    {
-        extern char **environ;
-        char **env = environ;
+	if (child_pid == -1)
+	{
+		perror("./hsh");
+		free(cmd_path);
+		return (1);
+	}
 
-        while (*env)
-        {
-            printf("%s\n", *env);
-            env++;
-        }
-        return 1;
-    }
+	if (child_pid == 0)
+	{
+		if (execve(cmd_path, args, environ) == -1)
+		{
+			perror("./hsh");
+			free(cmd_path);
+			exit(EXIT_FAILURE);
+		}
+	}
+	else
+	{
+		waitpid(child_pid, &status, 0);
+		free(cmd_path);
 
-    /* External commands */
-    pid = fork();
-    if (pid == 0)
-    {
-        if (execvp(args[0], args) == -1)
-        {
-            perror("hsh");
-            exit(EXIT_FAILURE);
-        }
-    }
-    else if (pid < 0)
-    {
-        perror("hsh");
-    }
-    else
-    {
-        do {
-            waitpid(pid, &status, WUNTRACED);
-        } while (!WIFEXITED(status) && !WIFSIGNALED(status));
-    }
+		if (WIFEXITED(status))
+			return (WEXITSTATUS(status));
+	}
 
-    return 1;
+	return (1);
 }
-
