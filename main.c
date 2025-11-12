@@ -3,12 +3,30 @@
 int last_status = 0;
 
 /**
+ * cleanup_and_exit - frees memory and exits
+ * @input_line: input line to free
+ * @command_args: command arguments to free
+ * @exit_code: exit code
+ *
+ * Return: void (does not return)
+ */
+void cleanup_and_exit(char *input_line, char **command_args, int exit_code)
+{
+	if (command_args)
+		free(command_args);
+	if (input_line)
+		free(input_line);
+	exit(exit_code);
+}
+
+/**
  * process_command - processes a single command
  * @command_args: parsed command arguments
+ * @input_line: original input line
  *
  * Return: 0 to continue, -1 to exit
  */
-int process_command(char **command_args)
+int process_command(char **command_args, char *input_line)
 {
 	int builtin_result;
 
@@ -18,9 +36,13 @@ int process_command(char **command_args)
 	builtin_result = check_builtin(command_args);
 
 	if (builtin_result == -1)
-		return (-1);
+	{
+		cleanup_and_exit(input_line, command_args, last_status);
+	}
 	else if (builtin_result == 0)
+	{
 		last_status = execute(command_args);
+	}
 
 	return (0);
 }
@@ -57,14 +79,7 @@ int main(void)
 		command_args = split_line(input_line, " \t\r\n\a");
 
 		if (command_args && command_args[0])
-		{
-			if (process_command(command_args) == -1)
-			{
-				free(command_args);
-				free(input_line);
-				return (last_status);
-			}
-		}
+			process_command(command_args, input_line);
 
 		free(command_args);
 	}

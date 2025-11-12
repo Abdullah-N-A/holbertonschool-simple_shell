@@ -1,15 +1,19 @@
 #include "shell.h"
 
 /**
- * find_env_match - finds matching environment variable
- * @name: variable name
- * @len: length of name
+ * get_env_value - retrieves environment variable value
+ * @name: name of environment variable
  *
  * Return: pointer to value or NULL
  */
-static char *find_env_match(char *name, int len)
+char *get_env_value(char *name)
 {
-	int i, j;
+	int i, j, len;
+
+	if (!name || !environ)
+		return (NULL);
+
+	len = strlen(name);
 
 	for (i = 0; environ[i]; i++)
 	{
@@ -22,30 +26,13 @@ static char *find_env_match(char *name, int len)
 }
 
 /**
- * get_env_value - retrieves environment variable value
- * @name: name of environment variable
- *
- * Return: pointer to value or NULL
- */
-char *get_env_value(char *name)
-{
-	int len;
-
-	if (!name || !environ)
-		return (NULL);
-
-	len = strlen(name);
-	return (find_env_match(name, len));
-}
-
-/**
  * build_full_path - constructs full path from directory and command
  * @dir: directory path
  * @command: command name
  *
  * Return: full path string or NULL
  */
-static char *build_full_path(char *dir, char *command)
+char *build_full_path(char *dir, char *command)
 {
 	char *full_path;
 	int dir_len, cmd_len;
@@ -71,7 +58,7 @@ static char *build_full_path(char *dir, char *command)
  *
  * Return: full path or NULL
  */
-static char *search_in_path(char *path_dup, char *command)
+char *search_in_path(char *path_dup, char *command)
 {
 	char *token, *full_path;
 	struct stat file_stat;
@@ -126,63 +113,4 @@ char *resolve_path(char *command)
 		return (NULL);
 
 	return (search_in_path(path_dup, command));
-}
-
-/**
- * str_to_int - converts string to integer
- * @str: string to convert
- *
- * Return: integer value
- */
-int str_to_int(char *str)
-{
-	int num = 0, sign = 1, i = 0;
-
-	if (!str)
-		return (0);
-
-	if (str[0] == '-')
-	{
-		sign = -1;
-		i = 1;
-	}
-	else if (str[0] == '+')
-		i = 1;
-
-	while (str[i] >= '0' && str[i] <= '9')
-	{
-		num = num * 10 + (str[i] - '0');
-		i++;
-	}
-
-	return (num * sign);
-}
-
-/**
- * validate_number - checks if string contains valid number
- * @str: string to validate
- *
- * Return: 1 if valid number, 0 otherwise
- */
-int validate_number(char *str)
-{
-	int i = 0;
-
-	if (!str || str[0] == '\0')
-		return (0);
-
-	if (str[0] == '-' || str[0] == '+')
-		i = 1;
-
-	if (str[i] == '\0')
-		return (0);
-
-	while (str[i])
-	{
-		if (str[i] < '0' || str[i] > '9')
-			return (0);
-		i++;
-	}
-
-	return (1);
 }

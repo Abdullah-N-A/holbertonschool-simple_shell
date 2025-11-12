@@ -1,6 +1,43 @@
 #include "shell.h"
 
 /**
+ * run_child_process - executes command in child process
+ * @cmd_path: full path to command
+ * @args: command arguments
+ *
+ * Return: void (does not return on success)
+ */
+void run_child_process(char *cmd_path, char **args)
+{
+	if (execve(cmd_path, args, environ) == -1)
+	{
+		perror("./hsh");
+		free(cmd_path);
+		exit(EXIT_FAILURE);
+	}
+}
+
+/**
+ * wait_for_child - waits for child process to complete
+ * @child_pid: process ID of child
+ * @cmd_path: full path to command (to free)
+ *
+ * Return: exit status of child process
+ */
+int wait_for_child(pid_t child_pid, char *cmd_path)
+{
+	int status;
+
+	waitpid(child_pid, &status, 0);
+	free(cmd_path);
+
+	if (WIFEXITED(status))
+		return (WEXITSTATUS(status));
+
+	return (1);
+}
+
+/**
  * execute - executes external command
  * @args: command and arguments array
  *
@@ -9,7 +46,6 @@
 int execute(char **args)
 {
 	pid_t child_pid;
-	int status;
 	char *cmd_path;
 
 	if (!args || !args[0])
@@ -33,22 +69,7 @@ int execute(char **args)
 	}
 
 	if (child_pid == 0)
-	{
-		if (execve(cmd_path, args, environ) == -1)
-		{
-			perror("./hsh");
-			free(cmd_path);
-			exit(EXIT_FAILURE);
-		}
-	}
-	else
-	{
-		waitpid(child_pid, &status, 0);
-		free(cmd_path);
+		run_child_process(cmd_path, args);
 
-		if (WIFEXITED(status))
-			return (WEXITSTATUS(status));
-	}
-
-	return (1);
+	return (wait_for_child(child_pid, cmd_path));
 }

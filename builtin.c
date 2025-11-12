@@ -1,7 +1,5 @@
 #include "shell.h"
 
-extern int last_status;
-
 /**
  * builtin_exit - handles exit command
  * @args: command arguments
