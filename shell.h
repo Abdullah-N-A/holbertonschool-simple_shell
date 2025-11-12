@@ -14,13 +14,8 @@
 extern char **environ;
 
 char **split_line(char *line, const char *delim);
-int _strlen(char *s);
-char *_strcpy(char *dest, char *src);
-char *_strcat(char *dest, char *src);
-char *find_path(char *cmd);
 int execute(char **args);
 int builtin_exit(char **args);
 int builtin_env(char **args);
-char *get_path(void);
 
 #endif
