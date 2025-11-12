@@ -1,0 +1,51 @@
+.TH SIMPLE_SHELL 1 "November 2025" "Holberton School" "User Commands"
+.SH NAME
+simple_shell \- a simple UNIX command interpreter
+.SH SYNOPSIS
+.B simple_shell
+[\fIcommand_file\fR]
+.SH DESCRIPTION
+.B simple_shell
+is a lightweight UNIX command interpreter written in C that mimics the behavior of the standard shell.
+
+It reads commands from the standard input or from a file and executes them.
+
+.SH FEATURES
+The shell supports:
+.TP
+\fBInteractive mode\fR
+Displays a prompt and waits for user input.
+.TP
+\fBNon-interactive mode\fR
+Executes commands passed from a pipe or a file.
+.TP
+\fBBuilt-in commands\fR
+exit, env
+
+.SH EXAMPLES
+.TP
+Run interactively:
+.nf
+$ ./hsh
+($) ls
+main.c shell.c README.md
+($) exit
+.fi
+.TP
+Run non-interactively:
+.nf
+$ echo "ls -l" | ./hsh
+total 8
+-rw-r--r-- 1 user user  200 Nov 12 14:32 main.c
+-rwxr-xr-x 1 user user 4096 Nov 12 14:32 hsh
+.fi
+
+.SH RETURN VALUE
+The exit status is that of the last command executed, or 0 if no command was run.
+
+.SH SEE ALSO
+sh(1), bash(1), execve(2), fork(2)
+
+.SH AUTHORS
+Abdullah Al-Asiri
+Fahad Al-Shammari 
