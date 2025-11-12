@@ -11,10 +11,12 @@
 #include <errno.h>
 
 extern char **environ;
+extern int last_status;
 
 /* Main shell functions */
 char **split_line(char *line, const char *delim);
 int execute(char **args);
+int process_command(char **command_args);
 
 /* Built-in commands */
 int builtin_exit(char **args);

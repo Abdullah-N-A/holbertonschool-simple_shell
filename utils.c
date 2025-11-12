@@ -1,6 +1,27 @@
 #include "shell.h"
 
 /**
+ * find_env_match - finds matching environment variable
+ * @name: variable name
+ * @len: length of name
+ *
+ * Return: pointer to value or NULL
+ */
+static char *find_env_match(char *name, int len)
+{
+	int i, j;
+
+	for (i = 0; environ[i]; i++)
+	{
+		for (j = 0; j < len && environ[i][j] == name[j]; j++)
+			;
+		if (j == len && environ[i][j] == '=')
+			return (&environ[i][j + 1]);
+	}
+	return (NULL);
+}
+
+/**
  * get_env_value - retrieves environment variable value
  * @name: name of environment variable
  *
@@ -8,64 +29,62 @@
  */
 char *get_env_value(char *name)
 {
-	int i, j, len;
+	int len;
 
 	if (!name || !environ)
 		return (NULL);
 
 	len = strlen(name);
-
-	for (i = 0; environ[i]; i++)
-	{
-		for (j = 0; j < len && environ[i][j] == name[j]; j++)
-			;
-
-		if (j == len && environ[i][j] == '=')
-			return (&environ[i][j + 1]);
-	}
-
-	return (NULL);
+	return (find_env_match(name, len));
 }
 
 /**
- * resolve_path - finds the full path of a command
- * @command: command name to find
+ * build_full_path - constructs full path from directory and command
+ * @dir: directory path
+ * @command: command name
  *
- * Return: full path string or NULL if not found
+ * Return: full path string or NULL
  */
-char *resolve_path(char *command)
+static char *build_full_path(char *dir, char *command)
 {
-	struct stat file_stat;
-	char *path_env, *path_dup, *token, *full_path;
-	int cmd_len, dir_len;
+	char *full_path;
+	int dir_len, cmd_len;
 
-	if (!command)
-		return (NULL);
-
-	if (command[0] == '/' || command[0] == '.')
-		return (stat(command, &file_stat) == 0 ? strdup(command) : NULL);
-
-	path_env = get_env_value("PATH");
-	if (!path_env)
-		return (NULL);
-
-	path_dup = strdup(path_env);
+	dir_len = strlen(dir);
 	cmd_len = strlen(command);
-	token = strtok(path_dup, ":");
+	full_path = malloc(dir_len + cmd_len + 2);
 
+	if (!full_path)
+		return (NULL);
+
+	strcpy(full_path, dir);
+	full_path[dir_len] = '/';
+	strcpy(full_path + dir_len + 1, command);
+
+	return (full_path);
+}
+
+/**
+ * search_in_path - searches for command in PATH directories
+ * @path_dup: duplicate of PATH variable
+ * @command: command to find
+ *
+ * Return: full path or NULL
+ */
+static char *search_in_path(char *path_dup, char *command)
+{
+	char *token, *full_path;
+	struct stat file_stat;
+
+	token = strtok(path_dup, ":");
 	while (token)
 	{
-		dir_len = strlen(token);
-		full_path = malloc(dir_len + cmd_len + 2);
+		full_path = build_full_path(token, command);
 		if (!full_path)
 		{
 			free(path_dup);
 			return (NULL);
 		}
-
-		strcpy(full_path, token);
-		full_path[dir_len] = '/';
-		strcpy(full_path + dir_len + 1, command);
 
 		if (stat(full_path, &file_stat) == 0)
 		{
@@ -82,7 +101,35 @@ char *resolve_path(char *command)
 }
 
 /**
- * str_to_int - converts string to integer (custom atoi)
+ * resolve_path - finds the full path of a command
+ * @command: command name to find
+ *
+ * Return: full path string or NULL if not found
+ */
+char *resolve_path(char *command)
+{
+	struct stat file_stat;
+	char *path_env, *path_dup;
+
+	if (!command)
+		return (NULL);
+
+	if (command[0] == '/' || command[0] == '.')
+		return (stat(command, &file_stat) == 0 ? strdup(command) : NULL);
+
+	path_env = get_env_value("PATH");
+	if (!path_env)
+		return (NULL);
+
+	path_dup = strdup(path_env);
+	if (!path_dup)
+		return (NULL);
+
+	return (search_in_path(path_dup, command));
+}
+
+/**
+ * str_to_int - converts string to integer
  * @str: string to convert
  *
  * Return: integer value

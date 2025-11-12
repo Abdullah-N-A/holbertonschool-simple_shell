@@ -1,5 +1,7 @@
 #include "shell.h"
 
+extern int last_status;
+
 /**
  * builtin_exit - handles exit command
  * @args: command arguments
@@ -22,6 +24,10 @@ int builtin_exit(char **args)
 		exit_code = exit_code % 256;
 		if (exit_code < 0)
 			exit_code = 256 + exit_code;
+	}
+	else
+	{
+		exit_code = last_status;
 	}
 
 	exit(exit_code);
