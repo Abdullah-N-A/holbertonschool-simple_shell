@@ -7,14 +7,26 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <errno.h>
 
-/* Prototypes */
+extern char **environ;
+
+/* Main shell functions */
 char **split_line(char *line, const char *delim);
 int execute(char **args);
+
+/* Built-in commands */
 int builtin_exit(char **args);
 int builtin_env(char **args);
-char *_strcpy(char *dest, const char *src);
-char *_strcat(char *dest, const char *src);
+int check_builtin(char **args);
+
+/* Path and environment utilities */
+char *get_env_value(char *name);
+char *resolve_path(char *command);
+
+/* String conversion utilities */
+int str_to_int(char *str);
+int validate_number(char *str);
 
 #endif
