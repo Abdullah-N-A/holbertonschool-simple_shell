@@ -1,10 +1,6 @@
 #include "shell.h"
 
-/**
- * execute - forks a child process to execute command
- * @args: array of command and arguments
- * Return: 1 on success, 0 if exit command
- */
+/* Execute command or built-in */
 int execute(char **args)
 {
     pid_t pid;
@@ -14,14 +10,19 @@ int execute(char **args)
         return 1;
 
     if (builtin_exit(args))
-        return 0;
+        exit(0);
+
+    if (builtin_env(args))
+        return 1;
 
     pid = fork();
     if (pid == 0)
     {
         if (execvp(args[0], args) == -1)
-            perror("hsh");
-        exit(EXIT_FAILURE);
+        {
+            perror("hsh"); /* Print error if command not found */
+            exit(EXIT_FAILURE);
+        }
     }
     else if (pid < 0)
     {

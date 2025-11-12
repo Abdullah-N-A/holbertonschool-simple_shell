@@ -5,17 +5,16 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/wait.h>
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#include <sys/wait.h>
 #include <errno.h>
 
-extern char **environ;
-
+/* Prototypes */
 char **split_line(char *line, const char *delim);
 int execute(char **args);
 int builtin_exit(char **args);
 int builtin_env(char **args);
+char *_strcpy(char *dest, const char *src);
+char *_strcat(char *dest, const char *src);
 
 #endif

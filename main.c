@@ -1,9 +1,6 @@
 #include "shell.h"
 
-/**
- * main - simple shell main loop
- * Return: 0 on success, 1 on failure
- */
+/* Entry point of the shell */
 int main(void)
 {
     char *line = NULL;
@@ -14,12 +11,13 @@ int main(void)
     while (1)
     {
         if (isatty(STDIN_FILENO))
-            write(STDOUT_FILENO, ":) ", 3);
+            write(STDOUT_FILENO, "$ ", 2); /* Prompt without newline */
 
         nread = getline(&line, &bufsize, stdin);
         if (nread == -1)
-            break;
+            break; /* EOF */
 
+        /* Remove trailing newline */
         if (line[nread - 1] == '\n')
             line[nread - 1] = '\0';
 
@@ -28,6 +26,7 @@ int main(void)
             continue;
 
         execute(args);
+
         free(args);
     }
 
