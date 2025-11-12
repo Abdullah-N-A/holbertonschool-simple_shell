@@ -1,6 +1,6 @@
 #include "shell.h"
 
-/* Split a line into tokens using given delimiter */
+/* Function to split the line into tokens (commands and arguments) */
 char **split_line(char *line, const char *delim)
 {
     int bufsize = 64, position = 0;

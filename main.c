@@ -11,18 +11,20 @@ int main(void)
     while (1)
     {
         if (isatty(STDIN_FILENO))
-            write(STDOUT_FILENO, "$ ", 2); /* Prompt without newline */
+            write(STDOUT_FILENO, "$ ", 2);
 
         nread = getline(&line, &bufsize, stdin);
         if (nread == -1)
-            break; /* EOF */
+            break;
 
-        /* Remove trailing newline */
+
         if (line[nread - 1] == '\n')
             line[nread - 1] = '\0';
 
+
         args = split_line(line, " \t\r\n\a");
-        if (!args || args[0] == NULL)
+
+        if (args == NULL || args[0] == NULL)
             continue;
 
         execute(args);
