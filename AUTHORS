@@ -1,3 +1,5 @@
 # This file lists all individuals having contributed content to the repository.
-Fahad Al-Shammari 
-Abdullah Al-Asiri 
+# Format follows Docker's AUTHORS file convention.
+
+Abdullah Al-Asiri <abdullah@example.com>
+Fahad Al-Shammari <fahad@example.com>
