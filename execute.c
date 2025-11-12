@@ -1,6 +1,10 @@
 #include "shell.h"
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <stdio.h>
 
-/* Execute command or built-in */
 int execute(char **args)
 {
     pid_t pid;
@@ -9,18 +13,38 @@ int execute(char **args)
     if (args[0] == NULL)
         return 1;
 
-    if (builtin_exit(args))
-        exit(0);
+    /* Handle "exit" built-in */
+    if (strcmp(args[0], "exit") == 0)
+    {
+        int exit_status = 0;
 
-    if (builtin_env(args))
+        if (args[1])  /* if there is an argument after exit */
+            exit_status = atoi(args[1]);
+
+        exit(exit_status);
+    }
+
+    /* Handle "env" built-in */
+    if (strcmp(args[0], "env") == 0)
+    {
+        extern char **environ;
+        char **env = environ;
+
+        while (*env)
+        {
+            printf("%s\n", *env);
+            env++;
+        }
         return 1;
+    }
 
+    /* External commands */
     pid = fork();
     if (pid == 0)
     {
         if (execvp(args[0], args) == -1)
         {
-            perror("hsh"); /* Print error if command not found */
+            perror("hsh");
             exit(EXIT_FAILURE);
         }
     }
@@ -37,3 +61,4 @@ int execute(char **args)
 
     return 1;
 }
+
