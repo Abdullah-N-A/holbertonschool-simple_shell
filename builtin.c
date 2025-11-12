@@ -22,13 +22,10 @@ int builtin_exit(char **args)
 		exit_code = exit_code % 256;
 		if (exit_code < 0)
 			exit_code = 256 + exit_code;
-	}
-	else
-	{
-		exit_code = last_status;
+		last_status = exit_code;
 	}
 
-	exit(exit_code);
+	return (-1);
 }
 
 /**

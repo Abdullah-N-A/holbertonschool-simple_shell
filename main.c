@@ -3,30 +3,12 @@
 int last_status = 0;
 
 /**
- * cleanup_and_exit - frees memory and exits
- * @input_line: input line to free
- * @command_args: command arguments to free
- * @exit_code: exit code
- *
- * Return: void (does not return)
- */
-void cleanup_and_exit(char *input_line, char **command_args, int exit_code)
-{
-	if (command_args)
-		free(command_args);
-	if (input_line)
-		free(input_line);
-	exit(exit_code);
-}
-
-/**
  * process_command - processes a single command
  * @command_args: parsed command arguments
- * @input_line: original input line
  *
  * Return: 0 to continue, -1 to exit
  */
-int process_command(char **command_args, char *input_line)
+int process_command(char **command_args)
 {
 	int builtin_result;
 
@@ -36,13 +18,9 @@ int process_command(char **command_args, char *input_line)
 	builtin_result = check_builtin(command_args);
 
 	if (builtin_result == -1)
-	{
-		cleanup_and_exit(input_line, command_args, last_status);
-	}
+		return (-1);
 	else if (builtin_result == 0)
-	{
 		last_status = execute(command_args);
-	}
 
 	return (0);
 }
@@ -58,8 +36,9 @@ int main(void)
 	size_t line_size = 0;
 	ssize_t chars_read;
 	char **command_args;
+	int should_exit = 0;
 
-	while (1)
+	while (!should_exit)
 	{
 		if (isatty(STDIN_FILENO))
 			write(STDOUT_FILENO, "($) ", 4);
@@ -79,7 +58,10 @@ int main(void)
 		command_args = split_line(input_line, " \t\r\n\a");
 
 		if (command_args && command_args[0])
-			process_command(command_args, input_line);
+		{
+			if (process_command(command_args) == -1)
+				should_exit = 1;
+		}
 
 		free(command_args);
 	}

@@ -16,10 +16,9 @@ extern int last_status;
 /* Main shell functions */
 char **split_line(char *line, const char *delim);
 int execute(char **args);
-int process_command(char **command_args, char *input_line);
+int process_command(char **command_args);
 void run_child_process(char *cmd_path, char **args);
 int wait_for_child(pid_t child_pid, char *cmd_path);
-void cleanup_and_exit(char *input_line, char **command_args, int exit_code);
 
 /* Built-in commands */
 int builtin_exit(char **args);
